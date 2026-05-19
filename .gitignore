@@ -19,3 +19,4 @@ node_modules/
 # Core dumps
 core
 core.*
+copilot.sh
