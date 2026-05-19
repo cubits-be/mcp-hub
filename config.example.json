@@ -1,0 +1,72 @@
+{
+  "port": 3000,
+  "upstreams": [
+    {
+      "name": "gmail",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@gongrzhe/server-gmail-autoauth-mcp"],
+      "namePrefix": "gmail__",
+      "allowAll": false,
+      "allowedTools": [
+        "search_emails",
+        "send_email",
+        "draft_email",
+        "modify_email",
+        "delete_email",
+        "list_email_labels"
+      ],
+      "allowedResources": [],
+      "allowedPrompts": []
+    },
+    {
+      "name": "google-calendar",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@gongrzhe/server-calendar-autoauth-mcp"],
+      "namePrefix": "google_calendar__",
+      "allowAll": true
+    },
+    {
+      "name": "google-tasks",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@scottie-will/google-tasks-mcp"],
+      "namePrefix": "google_tasks__",
+      "allowAll": true
+    },
+    {
+      "name": "home-assistant",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@jango-blockchained/homeassistant-mcp"],
+      "env": {
+        "HASS_HOST": "${HASS_HOST}",
+        "HASS_TOKEN": "${HASS_TOKEN}"
+      },
+      "namePrefix": "hass__",
+      "allowAll": true
+    },
+    {
+      "name": "github",
+      "transport": "sse",
+      "url": "${GITHUB_MCP_URL}",
+      "headers": {
+        "Authorization": "Bearer ${GITHUB_MCP_TOKEN}"
+      },
+      "namePrefix": "github__",
+      "allowAll": false,
+      "allowedTools": ["create_issue", "search_code"],
+      "allowedResources": [],
+      "allowedPrompts": []
+    },
+    {
+      "name": "filesystem",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
+      "namePrefix": "fs__",
+      "allowAll": true
+    }
+  ]
+}

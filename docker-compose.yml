@@ -1,0 +1,30 @@
+services:
+  hub:
+    build: .
+    ports:
+      - "${HUB_PORT:-3000}:3000"
+    env_file:
+      - .env
+    volumes:
+      # Mount your config (read-only). Copy config.example.json → config.json first.
+      - ./config.json:/app/config.json:ro
+      # Optional: persist npx cache so stdio upstreams don't re-download on every start
+      - npx-cache:/home/mcpuser/.npm
+      # OAuth2 credentials for Google services (run auth commands on host first):
+      #   Gmail:    npx @gongrzhe/server-gmail-autoauth-mcp auth
+      #   Calendar: npx @gongrzhe/server-calendar-autoauth-mcp auth
+      #   Tasks:    npx @scottie-will/google-tasks-mcp auth
+      #- ~/.gmail-mcp:/home/mcpuser/.gmail-mcp:ro
+      - ./.google-tasks-mcp:/home/mcpuser/.google-tasks-mcp:ro
+      - ./.calendar-mcp:/home/mcpuser/.calendar-mcp:ro
+      - ./.gmail-mcp:/home/mcpuser/.gmail-mcp:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+volumes:
+  npx-cache:

@@ -1,0 +1,21 @@
+# Environment / secrets — never commit these
+.env
+gcp-oauth.keys.json
+
+# Google OAuth credential stores
+.gmail-mcp/
+.calendar-mcp/
+.google-tasks-mcp/
+
+# Build output
+dist/
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+
+# Core dumps
+core
+core.*
