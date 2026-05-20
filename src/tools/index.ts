@@ -1,6 +1,7 @@
 import type { CustomTool } from "../types.js";
 import { googleCalendarTools } from "./google-calendar.js";
 import { googleGmailTools } from "./google-gmail.js";
+import { googleSheetsTools } from "./google-sheets.js";
 import { healthTools } from "./health.js";
 
 /** Returns the current UTC time. Useful as a simple "is the hub alive?" check. */
@@ -23,5 +24,6 @@ export const customTools: CustomTool[] = [
   currentTimeTool,
   ...googleCalendarTools,
   ...googleGmailTools,
+  ...googleSheetsTools,
   ...healthTools,
 ];
