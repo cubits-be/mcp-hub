@@ -181,13 +181,16 @@ Gmail, Calendar, and Sheets tools are built into the hub and share a single set 
 
 **2. Authenticate (once)**
 
+Use [cubits-be/google-auth](https://github.com/cubits-be/google-auth) to run the OAuth flow and generate credentials:
+
 ```bash
 mkdir -p ~/.google-oauth
 cp gcp-oauth.keys.json ~/.google-oauth/
-npx @gongrzhe/server-gmail-autoauth-mcp auth
+# Follow the instructions in cubits-be/google-auth to complete the OAuth flow
+# It saves credentials.json in ~/.google-oauth/
 ```
 
-> The auth command opens a browser, asks you to sign in, and saves `credentials.json` in `~/.google-oauth/`. The hub loads it automatically on startup — no further interaction needed.
+> The hub loads `credentials.json` from `~/.google-oauth/` automatically on startup — no further interaction needed.
 >
 > Make sure your OAuth consent screen includes all required scopes: Gmail, Calendar, and Sheets.
 
