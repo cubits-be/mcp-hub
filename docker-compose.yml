@@ -12,7 +12,7 @@ services:
       - npx-cache:/home/mcpuser/.npm
       # OAuth2 credentials for all Google services (Gmail, Calendar, Sheets).
       # Run auth once on the host: see README for instructions.
-      - ./.google-mcp:/home/mcpuser/.google-mcp:ro
+      - ./.google-oauth:/home/mcpuser/.google-oauth:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]

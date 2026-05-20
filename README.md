@@ -170,7 +170,7 @@ Add to your `claude_desktop_config.json`:
 
 ### Google services (Gmail, Calendar & Sheets)
 
-Gmail, Calendar, and Sheets tools are built into the hub and share a single set of OAuth2 credentials stored in `~/.google-mcp/`.
+Gmail, Calendar, and Sheets tools are built into the hub and share a single set of OAuth2 credentials stored in `~/.google-oauth/`.
 
 **1. Create a Google Cloud project & OAuth credentials**
 
@@ -182,12 +182,12 @@ Gmail, Calendar, and Sheets tools are built into the hub and share a single set 
 **2. Authenticate (once)**
 
 ```bash
-mkdir -p ~/.google-mcp
-cp gcp-oauth.keys.json ~/.google-mcp/
+mkdir -p ~/.google-oauth
+cp gcp-oauth.keys.json ~/.google-oauth/
 npx @gongrzhe/server-gmail-autoauth-mcp auth
 ```
 
-> The auth command opens a browser, asks you to sign in, and saves `credentials.json` in `~/.google-mcp/`. The hub loads it automatically on startup — no further interaction needed.
+> The auth command opens a browser, asks you to sign in, and saves `credentials.json` in `~/.google-oauth/`. The hub loads it automatically on startup — no further interaction needed.
 >
 > Make sure your OAuth consent screen includes all required scopes: Gmail, Calendar, and Sheets.
 

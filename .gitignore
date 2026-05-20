@@ -3,7 +3,7 @@
 gcp-oauth.keys.json
 
 # Google OAuth credential stores
-.google-mcp/
+.google-oauth/
 .gmail-mcp/
 .calendar-mcp/
 .google-tasks-mcp/
@@ -21,3 +21,4 @@ node_modules/
 core
 core.*
 copilot.sh
+.google-mcp/

@@ -7,7 +7,7 @@ import { loadOAuthClient, resolveCredDir } from "./google-oauth.js";
 // ---------------------------------------------------------------------------
 
 function getCalendar() {
-  const credDir = resolveCredDir("GOOGLE_MCP_DIR", ".google-mcp");
+  const credDir = resolveCredDir("GOOGLE_OAUTH_DIR", ".google-oauth");
   const auth = loadOAuthClient(credDir);
   return google.calendar({ version: "v3", auth });
 }
