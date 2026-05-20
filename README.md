@@ -106,6 +106,7 @@ The hub includes built-in tools implemented directly in TypeScript:
 |---|---|
 | `gmail__` | List messages, get full email body, create draft emails (plain text or HTML) |
 | `google_calendar__` | List, create, update, delete calendar events |
+| `gsheets__` | Read/write spreadsheet values, append rows, clear ranges |
 | `hub__` | Hub status, upstream health, log viewer |
 | `health__` | Heart rate, steps, sleep metrics (via InfluxDB) |
 
@@ -167,30 +168,28 @@ Add to your `claude_desktop_config.json`:
 
 ## Service-specific setup
 
-### Google services (Gmail & Calendar)
+### Google services (Gmail, Calendar & Sheets)
 
-Gmail and Calendar tools are built into the hub. They use OAuth2 with credentials stored on disk. You need to do a **one-time auth** per service before starting the hub.
+Gmail, Calendar, and Sheets tools are built into the hub and share a single set of OAuth2 credentials stored in `~/.google-mcp/`.
 
 **1. Create a Google Cloud project & OAuth credentials**
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/) and create a project
-2. Enable the **Gmail API** and **Google Calendar API**
+2. Enable the **Gmail API**, **Google Calendar API**, and **Google Sheets API**
 3. Go to **APIs & Services → Credentials → Create Credentials → OAuth client ID**
 4. Choose **Desktop app**, download the JSON, rename it `gcp-oauth.keys.json`
 
-**2. Authenticate each service (once)**
+**2. Authenticate (once)**
 
 ```bash
-# Gmail
-mkdir -p ~/.gmail-mcp && cp gcp-oauth.keys.json ~/.gmail-mcp/
+mkdir -p ~/.google-mcp
+cp gcp-oauth.keys.json ~/.google-mcp/
 npx @gongrzhe/server-gmail-autoauth-mcp auth
-
-# Google Calendar
-mkdir -p ~/.calendar-mcp && cp gcp-oauth.keys.json ~/.calendar-mcp/
-npx @gongrzhe/server-calendar-autoauth-mcp auth
 ```
 
-Each command opens a browser, asks you to sign in, and saves `credentials.json` in the service's config folder. After that the hub loads the credentials automatically on startup.
+> The auth command opens a browser, asks you to sign in, and saves `credentials.json` in `~/.google-mcp/`. The hub loads it automatically on startup — no further interaction needed.
+>
+> Make sure your OAuth consent screen includes all required scopes: Gmail, Calendar, and Sheets.
 
 ---
 

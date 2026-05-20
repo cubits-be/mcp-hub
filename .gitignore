@@ -3,6 +3,7 @@
 gcp-oauth.keys.json
 
 # Google OAuth credential stores
+.google-mcp/
 .gmail-mcp/
 .calendar-mcp/
 .google-tasks-mcp/

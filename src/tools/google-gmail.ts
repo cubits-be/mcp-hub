@@ -7,7 +7,7 @@ import { loadOAuthClient, resolveCredDir } from "./google-oauth.js";
 // ---------------------------------------------------------------------------
 
 function getGmail() {
-  const credDir = resolveCredDir("GMAIL_MCP_DIR", ".gmail-mcp");
+  const credDir = resolveCredDir("GOOGLE_MCP_DIR", ".google-mcp");
   const auth = loadOAuthClient(credDir);
   return google.gmail({ version: "v1", auth });
 }
