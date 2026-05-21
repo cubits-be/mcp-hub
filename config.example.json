@@ -2,40 +2,7 @@
   "port": 3000,
   "upstreams": [
     {
-      "name": "gmail",
-      "transport": "stdio",
-      "command": "npx",
-      "args": ["-y", "@gongrzhe/server-gmail-autoauth-mcp"],
-      "namePrefix": "gmail__",
-      "allowAll": false,
-      "allowedTools": [
-        "search_emails",
-        "send_email",
-        "draft_email",
-        "modify_email",
-        "delete_email",
-        "list_email_labels"
-      ],
-      "allowedResources": [],
-      "allowedPrompts": []
-    },
-    {
-      "name": "google-calendar",
-      "transport": "stdio",
-      "command": "npx",
-      "args": ["-y", "@gongrzhe/server-calendar-autoauth-mcp"],
-      "namePrefix": "google_calendar__",
-      "allowAll": true
-    },
-    {
-      "name": "google-tasks",
-      "transport": "stdio",
-      "command": "npx",
-      "args": ["-y", "@scottie-will/google-tasks-mcp"],
-      "namePrefix": "google_tasks__",
-      "allowAll": true
-    },
-    {
+      "_comment": "stdio upstream example — runs a local MCP server as a child process",
       "name": "home-assistant",
       "transport": "stdio",
       "command": "npx",
@@ -48,25 +15,27 @@
       "allowAll": true
     },
     {
+      "_comment": "streamable-http upstream example — connects to a remote MCP server over HTTP",
       "name": "github",
-      "transport": "sse",
-      "url": "${GITHUB_MCP_URL}",
+      "transport": "streamable-http",
+      "url": "https://api.githubcopilot.com/mcp/",
       "headers": {
-        "Authorization": "Bearer ${GITHUB_MCP_TOKEN}"
+        "Authorization": "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}"
       },
       "namePrefix": "github__",
-      "allowAll": false,
-      "allowedTools": ["create_issue", "search_code"],
-      "allowedResources": [],
-      "allowedPrompts": []
+      "allowAll": true
     },
     {
-      "name": "filesystem",
-      "transport": "stdio",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
-      "namePrefix": "fs__",
-      "allowAll": true
+      "_comment": "sse upstream example — connects to a remote MCP server over Server-Sent Events",
+      "name": "my-sse-server",
+      "transport": "sse",
+      "url": "https://my-mcp-server.example.com/sse",
+      "headers": {
+        "Authorization": "Bearer ${MY_SSE_TOKEN}"
+      },
+      "namePrefix": "myserver__",
+      "allowAll": false,
+      "allowedTools": ["tool_one", "tool_two"]
     }
   ]
 }
