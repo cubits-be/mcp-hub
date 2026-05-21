@@ -46,6 +46,16 @@
       "allowAll": true
     },
     {
+      "name": "sentry",
+      "transport": "streamable-http",
+      "url": "https://mcp.sentry.dev",
+      "headers": {
+        "Authorization": "Bearer ${SENTRY_AUTH_TOKEN}"
+      },
+      "namePrefix": "sentry__",
+      "allowAll": true
+    },
+    {
       "name": "node-red",
       "transport": "stdio",
       "command": "npx",
