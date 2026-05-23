@@ -22,7 +22,7 @@ npm run build
 npm start
 ```
 
-Configure VS Code / Claude Desktop to connect to `http://localhost:3000/sse`.
+Configure VS Code / Claude Desktop to connect to `http://localhost:3000/mcp` (Streamable HTTP) or `http://localhost:3000/sse` (SSE, legacy).
 
 ## Configuration (`config.json`)
 
@@ -141,13 +141,20 @@ Rebuild with `npm run build`.
 
 ## Connecting clients
 
+The hub exposes two server-side transports:
+
+| Endpoint | Transport | Notes |
+|---|---|---|
+| `POST /mcp` | Streamable HTTP (2025) | Preferred — use this for modern clients |
+| `GET /sse` | SSE (legacy) | Backwards-compatible fallback |
+
 ### VS Code (`.vscode/mcp.json`)
 ```json
 {
   "servers": {
     "mcp-hub": {
-      "type": "sse",
-      "url": "http://localhost:3000/sse",
+      "type": "http",
+      "url": "http://localhost:3000/mcp",
       "headers": { "Authorization": "Bearer your-api-key" }
     }
   }
@@ -160,7 +167,7 @@ Add to your `claude_desktop_config.json`:
 {
   "mcpServers": {
     "mcp-hub": {
-      "url": "http://localhost:3000/sse"
+      "url": "http://localhost:3000/mcp"
     }
   }
 }

@@ -1,6 +1,9 @@
+import { randomUUID } from "node:crypto";
 import express from "express";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -97,6 +100,50 @@ export function createHubServer(
       upstreams,
       totalTools: pool.tools.length + customTools.length,
     });
+  });
+
+  // -------------------------------------------------------------------------
+  // MCP Streamable HTTP endpoint (protocol version 2025-11-25)
+  // -------------------------------------------------------------------------
+
+  const streamableSessions = new Map<string, StreamableHTTPServerTransport>();
+
+  app.all("/mcp", authMiddleware, async (req, res) => {
+    const sessionId = req.headers["mcp-session-id"] as string | undefined;
+    const ip = clientIp(req);
+
+    try {
+      let transport: StreamableHTTPServerTransport;
+
+      if (sessionId && streamableSessions.has(sessionId)) {
+        transport = streamableSessions.get(sessionId)!;
+      } else if (!sessionId && req.method === "POST" && isInitializeRequest(req.body)) {
+        transport = new StreamableHTTPServerTransport({
+          sessionIdGenerator: () => randomUUID(),
+          onsessioninitialized: (sid) => {
+            streamableSessions.set(sid, transport);
+            logger.info({ event: "client_connected", clientIp: ip, transport: "streamable-http", sessionId: sid }, `client_connected (streamable-http) ← ${ip}`);
+          },
+        });
+        transport.onclose = () => {
+          const sid = transport.sessionId;
+          if (sid) streamableSessions.delete(sid);
+          logger.info({ event: "client_disconnected", clientIp: ip, transport: "streamable-http", sessionId: sid }, `client_disconnected (streamable-http) ← ${ip}`);
+        };
+        const mcpServer = buildMcpServer(pool, [...customTools, createHubStatusTool(pool), hubLogsTool], ip);
+        await mcpServer.connect(transport);
+      } else {
+        res.status(400).json({ jsonrpc: "2.0", error: { code: -32000, message: "Bad Request: missing or invalid session" }, id: null });
+        return;
+      }
+
+      await transport.handleRequest(req, res, req.body);
+    } catch (err) {
+      logger.error({ event: "streamable_http_error", clientIp: ip, err }, String(err));
+      if (!res.headersSent) {
+        res.status(500).json({ jsonrpc: "2.0", error: { code: -32603, message: "Internal error" }, id: null });
+      }
+    }
   });
 
   // -------------------------------------------------------------------------
