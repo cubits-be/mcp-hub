@@ -146,9 +146,10 @@ export class UpstreamConnection {
       this.state.tools = tools
         .filter((t) => isAllowed(t.name, allowAll, cfg.allowedTools))
         .map((t) => ({
-          ...t,
           name: prefixed(prefix, t.name),
           description: t.description || `${cfg.name} tool: ${t.name}`,
+          inputSchema: t.inputSchema,
+          ...(t.annotations ? { annotations: t.annotations } : {}),
         }));
     } catch {
       this.state.tools = [];
@@ -159,7 +160,12 @@ export class UpstreamConnection {
       const { resources } = await this.client!.listResources();
       this.state.resources = resources
         .filter((r) => isAllowed(r.name, allowAll, cfg.allowedResources))
-        .map((r) => ({ ...r, name: prefixed(prefix, r.name), uri: prefixed(prefix, r.uri) }));
+        .map((r) => ({
+          uri: prefixed(prefix, r.uri),
+          name: prefixed(prefix, r.name),
+          ...(r.description ? { description: r.description } : {}),
+          ...(r.mimeType ? { mimeType: r.mimeType } : {}),
+        }));
     } catch {
       this.state.resources = [];
     }
@@ -169,7 +175,12 @@ export class UpstreamConnection {
       const { resourceTemplates } = await this.client!.listResourceTemplates();
       this.state.resourceTemplates = resourceTemplates
         .filter((rt) => isAllowed(rt.name, allowAll, cfg.allowedResources))
-        .map((rt) => ({ ...rt, name: prefixed(prefix, rt.name), uriTemplate: prefixed(prefix, rt.uriTemplate) }));
+        .map((rt) => ({
+          uriTemplate: prefixed(prefix, rt.uriTemplate),
+          name: prefixed(prefix, rt.name),
+          ...(rt.description ? { description: rt.description } : {}),
+          ...(rt.mimeType ? { mimeType: rt.mimeType } : {}),
+        }));
     } catch {
       this.state.resourceTemplates = [];
     }
@@ -179,7 +190,11 @@ export class UpstreamConnection {
       const { prompts } = await this.client!.listPrompts();
       this.state.prompts = prompts
         .filter((p) => isAllowed(p.name, allowAll, cfg.allowedPrompts))
-        .map((p) => ({ ...p, name: prefixed(prefix, p.name) }));
+        .map((p) => ({
+          name: prefixed(prefix, p.name),
+          ...(p.description ? { description: p.description } : {}),
+          ...(p.arguments ? { arguments: p.arguments } : {}),
+        }));
     } catch {
       this.state.prompts = [];
     }
