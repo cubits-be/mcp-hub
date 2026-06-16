@@ -204,13 +204,33 @@ export class UpstreamConnection {
   // Proxying calls
   // ---------------------------------------------------------------------------
 
+  private isInvalidSession(err: unknown): boolean {
+    return String(err).toLowerCase().includes("invalid session");
+  }
+
+  private async reconnectNow(): Promise<void> {
+    logUpstreamEvent("reconnecting", this.state.config.name, "invalid session — reconnecting");
+    await this.stop();
+    this.stopped = false;
+    await this.tryConnect();
+  }
+
   async callTool(prefixedName: string, args: Record<string, unknown>): Promise<CallToolResult> {
     if (!this.client || this.state.status !== "connected") {
       throw new Error(`Upstream "${this.state.config.name}" is not connected`);
     }
     const prefix = resolvePrefix(this.state.config.name, this.state.config.namePrefix);
     const originalName = unprefixed(prefix, prefixedName);
-    return this.client.callTool({ name: originalName, arguments: args }) as Promise<CallToolResult>;
+    try {
+      return await this.client.callTool({ name: originalName, arguments: args }) as CallToolResult;
+    } catch (err) {
+      if (this.isInvalidSession(err)) {
+        await this.reconnectNow();
+        if (!this.client || this.state.status !== "connected") throw err;
+        return this.client.callTool({ name: originalName, arguments: args }) as unknown as CallToolResult;
+      }
+      throw err;
+    }
   }
 
   async readResource(prefixedUri: string): Promise<ReadResourceResult> {
@@ -219,7 +239,16 @@ export class UpstreamConnection {
     }
     const prefix = resolvePrefix(this.state.config.name, this.state.config.namePrefix);
     const originalUri = unprefixed(prefix, prefixedUri);
-    return this.client.readResource({ uri: originalUri });
+    try {
+      return await this.client.readResource({ uri: originalUri });
+    } catch (err) {
+      if (this.isInvalidSession(err)) {
+        await this.reconnectNow();
+        if (!this.client || this.state.status !== "connected") throw err;
+        return this.client.readResource({ uri: originalUri });
+      }
+      throw err;
+    }
   }
 
   async getPrompt(prefixedName: string, args?: Record<string, string>): Promise<GetPromptResult> {
@@ -228,7 +257,16 @@ export class UpstreamConnection {
     }
     const prefix = resolvePrefix(this.state.config.name, this.state.config.namePrefix);
     const originalName = unprefixed(prefix, prefixedName);
-    return this.client.getPrompt({ name: originalName, arguments: args });
+    try {
+      return await this.client.getPrompt({ name: originalName, arguments: args });
+    } catch (err) {
+      if (this.isInvalidSession(err)) {
+        await this.reconnectNow();
+        if (!this.client || this.state.status !== "connected") throw err;
+        return this.client.getPrompt({ name: originalName, arguments: args });
+      }
+      throw err;
+    }
   }
 }
 

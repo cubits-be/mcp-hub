@@ -133,7 +133,7 @@ export function createHubServer(
         const mcpServer = buildMcpServer(pool, [...customTools, createHubStatusTool(pool), hubLogsTool], ip);
         await mcpServer.connect(transport);
       } else {
-        res.status(400).json({ jsonrpc: "2.0", error: { code: -32000, message: "Bad Request: missing or invalid session" }, id: null });
+        res.status(404).json({ jsonrpc: "2.0", error: { code: -32000, message: "Session not found" }, id: null });
         return;
       }
 
