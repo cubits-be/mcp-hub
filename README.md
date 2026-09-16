@@ -109,6 +109,7 @@ The hub includes built-in tools implemented directly in TypeScript:
 | `gsheets__` | Read/write spreadsheet values, append rows, clear ranges |
 | `hub__` | Hub status, upstream health, log viewer |
 | `health__` | Heart rate, steps, sleep metrics (via InfluxDB) |
+| `portracker__` | Open ports, services, and tracked servers (via portracker) |
 
 These require Google OAuth credentials — see [Google services setup](#google-services-gmail--calendar) below.
 
