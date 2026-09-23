@@ -3,6 +3,7 @@ import { googleCalendarTools } from "./google-calendar.js";
 import { googleGmailTools } from "./google-gmail.js";
 import { googleSheetsTools } from "./google-sheets.js";
 import { healthTools } from "./health.js";
+import { paperlessTools } from "./paperless.js";
 import { portrackerTools } from "./portracker.js";
 import { registryTools } from "./registry.js";
 
@@ -28,6 +29,7 @@ export const customTools: CustomTool[] = [
   ...googleGmailTools,
   ...googleSheetsTools,
   ...healthTools,
+  ...paperlessTools,
   ...portrackerTools,
   ...registryTools,
 ];

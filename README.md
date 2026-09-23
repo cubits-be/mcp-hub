@@ -111,6 +111,7 @@ The hub includes built-in tools implemented directly in TypeScript:
 | `health__` | Heart rate, steps, sleep metrics (via InfluxDB) |
 | `portracker__` | Open ports, services, and tracked servers (via portracker) |
 | `registry__` | List images and tags in the private Docker registry (v2 API) |
+| `paperless__` | Browse/search Paperless-ngx documents (metadata only) and fetch a single document's full content by id |
 
 These require Google OAuth credentials — see [Google services setup](#google-services-gmail--calendar) below.
 
@@ -229,6 +230,42 @@ HASS_TOKEN=your_long_lived_access_token
 ```
 
 Set `"enabled": true` on the `home-assistant` upstream in `config.json` to activate it.
+
+---
+
+### Paperless-ngx
+
+Implemented as built-in custom tools (`src/tools/paperless.ts`), not a proxied upstream — this gives the hub full control over what's returned instead of depending on a third-party package's fixed response shape.
+
+- `paperless__list_documents` / `paperless__search_documents` return metadata only (title, correspondent, type, tags, dates, and — for search — a short highlighted snippet). They deliberately never include a document's full OCR'd text.
+- `paperless__get_document` fetches one document by id, including its full content. This is the only tool that returns full text — used deliberately, after browsing/searching, not as a side effect of listing.
+- There are no write/delete tools at all — nothing to allowlist, nothing to accidentally expose.
+
+(An earlier iteration proxied the community [`@nloui/paperless-mcp`](https://www.npmjs.com/package/@nloui/paperless-mcp) stdio server instead, which always returned full document content on every list/search/get call regardless of what was actually needed — every tool call fed full document text into the AI client.)
+
+**1. Create a dedicated read-only Paperless-ngx user**
+
+Don't reuse your personal account's token: Paperless-ngx only supports one active API token per user, and regenerating it invalidates it everywhere else it's used. Instead, create a separate user (**Settings → Users & Groups**) with only **View** permission on:
+
+- Document
+- Tag
+- Correspondent
+- Document type
+
+Leave everything else unchecked, and don't make it a superuser or staff user.
+
+**2. Generate its API token**
+
+Log in as that user → username (top right) → **My Profile** → click the circular-arrow button.
+
+**3. Set env vars**
+
+```env
+PAPERLESS_URL=http://your-paperless-instance:8000
+PAPERLESS_API_TOKEN=the_dedicated_users_token
+```
+
+> **Note:** `view_document` permission doesn't guarantee visibility into every document. Paperless-ngx documents can be owner-restricted per-object (**Settings → Permissions** on a document). If some documents are missing from search/list results, check whether they're scoped to a different owner.
 
 ---
 
