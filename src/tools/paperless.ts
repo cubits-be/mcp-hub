@@ -249,6 +249,9 @@ interface DocumentFull extends DocumentMeta {
   content: string;
 }
 
+/** Default cap on returned content so one huge document can't flood the client's context. */
+const DEFAULT_MAX_CHARS = 50_000;
+
 const getDocumentTool: CustomTool = {
   definition: {
     name: "paperless__get_document",
@@ -260,6 +263,10 @@ const getDocumentTool: CustomTool = {
       type: "object",
       properties: {
         id: { type: "number", description: "Document id." },
+        max_chars: {
+          type: "number",
+          description: `Maximum characters of content to return (default: ${DEFAULT_MAX_CHARS}). Use 0 for no limit.`,
+        },
       },
       required: ["id"],
     },
@@ -269,7 +276,16 @@ const getDocumentTool: CustomTool = {
     if (!Number.isInteger(id) || id <= 0) throw new Error(`Invalid document id: ${String(args.id)}`);
     const [doc, names] = await Promise.all([paperlessGet<DocumentFull>(`/api/documents/${id}/`), getNames()]);
     const header = [`#${doc.id} ${doc.title}`, `created=${doc.created}`, ...describeTaxonomy(doc, names)];
-    return text(`${header.join("  ")}\n\n${doc.content}`);
+
+    const maxChars = Number(args.max_chars ?? DEFAULT_MAX_CHARS);
+    if (!Number.isInteger(maxChars) || maxChars < 0) throw new Error(`Invalid max_chars: ${String(args.max_chars)}`);
+    let content = doc.content ?? "";
+    if (maxChars > 0 && content.length > maxChars) {
+      content =
+        `${content.slice(0, maxChars)}\n\n[truncated: showing ${maxChars} of ${content.length} characters — ` +
+        `call again with a higher max_chars, or 0 for the full text]`;
+    }
+    return text(`${header.join("  ")}\n\n${content}`);
   },
 };
 
