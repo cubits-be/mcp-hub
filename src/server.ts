@@ -111,6 +111,7 @@ export function createHubServer(
   app.all("/mcp", authMiddleware, async (req, res) => {
     const sessionId = req.headers["mcp-session-id"] as string | undefined;
     const ip = clientIp(req);
+    const userAgent = req.headers["user-agent"];
 
     try {
       let transport: StreamableHTTPServerTransport;
@@ -122,7 +123,7 @@ export function createHubServer(
           sessionIdGenerator: () => randomUUID(),
           onsessioninitialized: (sid) => {
             streamableSessions.set(sid, transport);
-            logger.info({ event: "client_connected", clientIp: ip, transport: "streamable-http", sessionId: sid }, `client_connected (streamable-http) ← ${ip}`);
+            logger.info({ event: "client_connected", clientIp: ip, transport: "streamable-http", sessionId: sid, userAgent }, `client_connected (streamable-http) ← ${ip}`);
           },
         });
         transport.onclose = () => {
@@ -130,7 +131,7 @@ export function createHubServer(
           if (sid) streamableSessions.delete(sid);
           logger.info({ event: "client_disconnected", clientIp: ip, transport: "streamable-http", sessionId: sid }, `client_disconnected (streamable-http) ← ${ip}`);
         };
-        const mcpServer = buildMcpServer(pool, [...customTools, createHubStatusTool(pool), hubLogsTool], ip);
+        const mcpServer = buildMcpServer(pool, [...customTools, createHubStatusTool(pool), hubLogsTool], ip, "streamable-http");
         await mcpServer.connect(transport);
       } else {
         res.status(404).json({ jsonrpc: "2.0", error: { code: -32000, message: "Session not found" }, id: null });
@@ -170,9 +171,9 @@ export function createHubServer(
 
   app.get("/sse", authMiddleware, (req, res) => {
     const ip = clientIp(req);
-    logger.info({ event: "client_connected", clientIp: ip }, `client_connected  ← ${ip}`);
+    logger.info({ event: "client_connected", clientIp: ip, transport: "sse", userAgent: req.headers["user-agent"] }, `client_connected  ← ${ip}`);
 
-    const mcpServer = buildMcpServer(pool, [...customTools, createHubStatusTool(pool), hubLogsTool], ip);
+    const mcpServer = buildMcpServer(pool, [...customTools, createHubStatusTool(pool), hubLogsTool], ip, "sse");
     const transport = new SSEServerTransport("/message", res);
     sessions.set(transport.sessionId, transport);
 
@@ -197,7 +198,8 @@ export function createHubServer(
 function buildMcpServer(
   pool: UpstreamPool,
   customTools: CustomTool[],
-  clientIpAddr: string
+  clientIpAddr: string,
+  transport: "sse" | "streamable-http"
 ): Server {
   const server = new Server(
     { name: "tars-hub-mcp", version: "0.1.0" },
@@ -209,6 +211,16 @@ function buildMcpServer(
       },
     }
   );
+
+  // Log the client's self-reported name/version once the initialize handshake completes.
+  server.oninitialized = () => {
+    const client = server.getClientVersion();
+    const label = client ? `${client.name} ${client.version}` : "unknown client";
+    logger.info(
+      { event: "client_initialized", clientIp: clientIpAddr, transport, clientName: client?.name, clientVersion: client?.version },
+      `client_initialized ← ${clientIpAddr} ${label} (${transport})`
+    );
+  };
 
   const allCustomToolDefs = customTools.map((ct) => ct.definition);
   const customToolMap = new Map(customTools.map((ct) => [ct.definition.name, ct]));
