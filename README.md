@@ -110,6 +110,7 @@ The hub includes built-in tools implemented directly in TypeScript:
 | `hub__` | Hub status, upstream health, log viewer |
 | `health__` | Heart rate, steps, sleep metrics (via InfluxDB) |
 | `portracker__` | Open ports, services, and tracked servers (via portracker) |
+| `registry__` | List images and tags in the private Docker registry (v2 API) |
 
 These require Google OAuth credentials — see [Google services setup](#google-services-gmail--calendar) below.
 
