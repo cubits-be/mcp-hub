@@ -60,6 +60,8 @@ interface TaxonomyNames {
 
 /** Id → name lookups are cached briefly so listing/searching doesn't refetch taxonomy on every call. */
 const NAMES_TTL_MS = 5 * 60 * 1000;
+/** Minimum age before an unknown id may force an early reload (throttles ids that stay unresolvable). */
+const NAMES_MIN_REFRESH_MS = 30 * 1000;
 let namesCache: { at: number; names: Promise<TaxonomyNames> } | undefined;
 
 async function loadNames(): Promise<TaxonomyNames> {
@@ -84,6 +86,22 @@ async function getNames(): Promise<TaxonomyNames> {
     });
   }
   return cached.names.catch(() => ({ tags: new Map(), correspondents: new Map(), documentTypes: new Map() }));
+}
+
+/**
+ * Returns names covering every id on `docs`. If some id is missing from the cache (e.g. a tag
+ * created or shared since the last load), reloads early — at most once per NAMES_MIN_REFRESH_MS.
+ */
+async function namesFor(docs: DocumentMeta[], names: TaxonomyNames): Promise<TaxonomyNames> {
+  const unknown = docs.some(
+    (d) =>
+      (d.correspondent !== null && !names.correspondents.has(d.correspondent)) ||
+      (d.document_type !== null && !names.documentTypes.has(d.document_type)) ||
+      d.tags.some((t) => !names.tags.has(t))
+  );
+  if (!unknown || !namesCache || Date.now() - namesCache.at < NAMES_MIN_REFRESH_MS) return names;
+  namesCache = undefined;
+  return getNames();
 }
 
 function nameOf(map: NameMap, id: number): string {
@@ -198,7 +216,8 @@ const listDocumentsTool: CustomTool = {
       getNames(),
     ]);
     if (!res.results.length) return text("No documents found.");
-    const lines = res.results.map((d) => formatDoc(d, names));
+    const resolved = await namesFor(res.results, names);
+    const lines = res.results.map((d) => formatDoc(d, resolved));
     return text(`Documents (${res.count} total, showing ${res.results.length}):\n${lines.join("\n")}`);
   },
 };
@@ -236,7 +255,8 @@ const searchDocumentsTool: CustomTool = {
       getNames(),
     ]);
     if (!res.results.length) return text(`No documents matched "${query}".`);
-    const lines = res.results.map((d) => formatDoc(d, names));
+    const resolved = await namesFor(res.results, names);
+    const lines = res.results.map((d) => formatDoc(d, resolved));
     return text(`Search results for "${query}" (${res.count} total match(es)):\n${lines.join("\n")}`);
   },
 };
@@ -275,7 +295,7 @@ const getDocumentTool: CustomTool = {
     const id = Number(args.id);
     if (!Number.isInteger(id) || id <= 0) throw new Error(`Invalid document id: ${String(args.id)}`);
     const [doc, names] = await Promise.all([paperlessGet<DocumentFull>(`/api/documents/${id}/`), getNames()]);
-    const header = [`#${doc.id} ${doc.title}`, `created=${doc.created}`, ...describeTaxonomy(doc, names)];
+    const header = [`#${doc.id} ${doc.title}`, `created=${doc.created}`, ...describeTaxonomy(doc, await namesFor([doc], names))];
 
     const maxChars = Number(args.max_chars ?? DEFAULT_MAX_CHARS);
     if (!Number.isInteger(maxChars) || maxChars < 0) throw new Error(`Invalid max_chars: ${String(args.max_chars)}`);

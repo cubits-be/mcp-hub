@@ -267,7 +267,7 @@ PAPERLESS_API_TOKEN=the_dedicated_users_token
 
 > **Note:** `view_document` permission doesn't guarantee visibility into every document. Paperless-ngx documents can be owner-restricted per-object (**Settings → Permissions** on a document). If some documents are missing from search/list results, check whether they're scoped to a different owner.
 >
-> The same applies to tags, correspondents, and document types — they have their own owners. If results show `#id` instead of names (e.g. `tags=[#7, #2]`), those objects are owned by another user and not shared with the read-only one. Fix it under **Manage → Tags / Correspondents / Document Types**: select all → **Permissions** → grant the read-only user **View** (or clear the owner). Names are cached for 5 minutes, so changes show up after that or after a hub restart.
+> The same applies to tags, correspondents, and document types — they have their own owners. If results show `#id` instead of names (e.g. `tags=[#7, #2]`), those objects are owned by another user and not shared with the read-only one. Fix it under **Manage → Tags / Correspondents / Document Types**: select all → **Permissions** → grant the read-only user **View** (or clear the owner). Names are cached for 5 minutes, but an id missing from the cache triggers an early reload (at most every 30 seconds), so newly created or shared objects show up almost immediately.
 
 ---
 
