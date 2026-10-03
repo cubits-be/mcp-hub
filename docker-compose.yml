@@ -1,8 +1,9 @@
 services:
   hub:
     build: .
-    ports:
-      - "${HUB_PORT:-3000}:3000"
+    # Host networking: required so the Wake-on-LAN tool's UDP broadcasts reach the LAN.
+    # `ports:` is ignored in this mode — the hub binds the host port from config.json ("port").
+    network_mode: host
     env_file:
       - .env
     volumes:
@@ -15,7 +16,8 @@ services:
       - ./.google-oauth:/home/mcpuser/.google-oauth:ro
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      # HUB_PORT must match "port" in config.json
+      test: ["CMD", "wget", "-qO-", "http://localhost:${HUB_PORT:-3000}/health"]
       interval: 30s
       timeout: 5s
       start_period: 15s

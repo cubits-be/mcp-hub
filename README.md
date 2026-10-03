@@ -112,6 +112,7 @@ The hub includes built-in tools implemented directly in TypeScript:
 | `portracker__` | Open ports, services, and tracked servers (via portracker) |
 | `registry__` | List images and tags in the private Docker registry (v2 API) |
 | `paperless__` | Browse/search Paperless-ngx documents (metadata only) and fetch a single document's full content by id |
+| `wol__` | Send a Wake-on-LAN magic packet to a configured PC |
 
 These require Google OAuth credentials — see [Google services setup](#google-services-gmail--calendar) below.
 
@@ -271,6 +272,34 @@ PAPERLESS_API_TOKEN=the_dedicated_users_token
 
 ---
 
+### Wake-on-LAN
+
+Implemented as a built-in custom tool (`src/tools/wol.ts`). `wol__wake` takes no arguments and sends 3 magic packets (6×`0xFF` + the target MAC ×16) as a UDP broadcast to the single PC configured in the environment — the MAC can't be chosen by the caller. It is fire-and-forget: there is no confirmation that the PC actually booted.
+
+**1. Set env vars**
+
+```env
+WOL_MAC=34:5A:60:73:A0:39
+WOL_NAME=titan                  # label used in the tool description/output
+WOL_BROADCAST=192.168.1.255     # broadcast address of the target's LAN (see `ip -br addr`)
+WOL_PORT=9
+```
+
+**2. Hub must be on the LAN**
+
+UDP broadcasts from a bridged Docker container never reach the physical network, so `docker-compose.yml` runs the hub with `network_mode: host`. In that mode `ports:` is ignored and the hub binds the host port from `"port"` in `config.json` (keep `HUB_PORT` in `.env` equal to it — it's used by the healthcheck). The hub must also be in the same broadcast domain as the target (no VLAN/subnet in between).
+
+**3. Target PC setup**
+
+- Wired Ethernet only (not Wi-Fi), cable plugged in, PSU switch on.
+- Windows: install the vendor LAN driver (the generic inbox driver reports `WakeOnMagicPacket : Unsupported`), then in admin PowerShell run `Enable-NetAdapterPowerManagement -Name "Ethernet" -WakeOnMagicPacket`. In the adapter's advanced properties enable *Wake on Magic Packet* and *Shutdown Wake-On-LAN*.
+- Disable Fast Startup (keep hibernate): `Set-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power" -Name HiberbootEnabled -Value 0`
+- BIOS/UEFI: enable the PCI-E / LAN wake option (MSI: *Wake Up Event Setup → Resume By PCI-E Device = Enabled*, *Power Management Setup → ErP Ready = Disabled*; other vendors call it "Power On By PCI-E" / "Resume by LAN").
+
+Tailscale can't wake a powered-off PC by itself — the hub (on the LAN) has to send the packet.
+
+---
+
 ## Docker
 
 ```bash
@@ -280,6 +309,6 @@ cp env.example .env                  # fill in secrets
 docker compose up -d
 ```
 
-The `docker-compose.yml` mounts `config.json` read-only and persists the npm cache so stdio upstreams (launched via `npx`) don't re-download on every restart.
+The hub runs with `network_mode: host` (needed for [Wake-on-LAN](#wake-on-lan)), so it listens on the `"port"` from `config.json` directly; `HUB_PORT` in `.env` must match it for the healthcheck. The `docker-compose.yml` mounts `config.json` read-only and persists the npm cache so stdio upstreams (launched via `npx`) don't re-download on every restart.
 
 > **Note on stdio upstreams in Docker:** paths in `args` refer to paths *inside* the container. Mount host directories as volumes if needed.

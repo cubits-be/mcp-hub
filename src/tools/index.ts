@@ -6,6 +6,7 @@ import { healthTools } from "./health.js";
 import { paperlessTools } from "./paperless.js";
 import { portrackerTools } from "./portracker.js";
 import { registryTools } from "./registry.js";
+import { wolTools } from "./wol.js";
 
 /** Returns the current UTC time. Useful as a simple "is the hub alive?" check. */
 const currentTimeTool: CustomTool = {
@@ -32,4 +33,5 @@ export const customTools: CustomTool[] = [
   ...paperlessTools,
   ...portrackerTools,
   ...registryTools,
+  ...wolTools,
 ];
